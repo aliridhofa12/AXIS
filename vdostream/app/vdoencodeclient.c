@@ -14,7 +14,7 @@
 static VdoStream* stream;
 static gboolean shutdown = FALSE;
 static const gchar *param_desc = "";
-static const gchar *summary = "Encode video client";
+static const gchar *summary = "Encoded video client";
 
 // Facilitate graceful shutdown with CTRL-C
 static void
@@ -29,9 +29,9 @@ print_frame(VdoFrame* frame)
 {
     if (!vdo_frame_get_is_last_buffer(frame))
         return;
-    
+
     gchar *frame_type;
-    switch (vdo_frame_get_frame_type(frame)){
+    switch(vdo_frame_get_frame_type(frame)) {
         case VDO_FRAME_TYPE_H264_IDR:
         case VDO_FRAME_TYPE_H265_IDR:
         case VDO_FRAME_TYPE_H264_I:
@@ -46,7 +46,7 @@ print_frame(VdoFrame* frame)
             frame_type = "jpeg";
             break;
         case VDO_FRAME_TYPE_YUV:
-            frame_type = "YUV";
+            frame_type = "yuv";
             break;
         default:
             frame_type = "NA";
@@ -76,13 +76,12 @@ set_format(VdoMap *settings, gchar *format, GError **error)
         vdo_map_set_string(settings, "subformat", "Y800");
     } else {
         g_set_error(error, VDO_CLIENT_ERROR, VDO_ERROR_NOT_FOUND,
-                    "format \"%s\" is not supported\n", format);
+                    "Format \"%s\" is not supported\n", format);
         return FALSE;
     }
 
     return TRUE;
 }
-
 
 /**
  * Main function that starts a stream with the following options:
@@ -97,7 +96,7 @@ main(int argc, char* argv[])
     GError *error = NULL;
     gchar *format = "h264";
     guint frames = G_MAXUINT;
-    gchar *output_file = "/def/null";
+    gchar *output_file = "/dev/null";
     FILE* dest_f = NULL;
 
     openlog(NULL, LOG_PID, LOG_USER);
@@ -119,25 +118,24 @@ main(int argc, char* argv[])
         goto exit;
 
     dest_f = fopen(output_file, "wb");
-    if (!dest_f){
+    if (!dest_f) {
         g_set_error(&error, VDO_CLIENT_ERROR, VDO_ERROR_IO, "open failed: %m");
         goto exit;
     }
 
     if (signal(SIGINT, handle_sigint) == SIG_ERR) {
         g_set_error(&error, VDO_CLIENT_ERROR, VDO_ERROR_IO,
-                    "Failed to Install signal handler: %m");
+                    "Failed to install signal handler: %m");
         goto exit;
     }
 
-    
     VdoMap *settings = vdo_map_new();
     if (!set_format(settings, format, &error))
         goto exit;
 
     // Set default arguments
-    vdo_map_set_uint32(settings, "width", 640);
-    vdo_map_set_uint32(settings, "heigth", 360);
+    vdo_map_set_uint32(settings, "width",  640);
+    vdo_map_set_uint32(settings, "height", 360);
 
     // Create a new stream
     stream = vdo_stream_new(settings, NULL, &error);
@@ -152,10 +150,10 @@ main(int argc, char* argv[])
     if (!info)
         goto exit;
 
-    syslog(LOG_INFO, "Starting stream: %s, %ux%u, %u, fps\n",
+    syslog(LOG_INFO, "Starting stream: %s, %ux%u, %u fps\n",
             format,
             vdo_map_get_uint32(info, "width", 0),
-            vdo_map_get_uint32(info, "heigth", 0),
+            vdo_map_get_uint32(info, "height", 0),
             vdo_map_get_uint32(info, "framerate", 0));
 
     g_clear_object(&info);
@@ -191,6 +189,7 @@ main(int argc, char* argv[])
 
         if (!fwrite(data, vdo_frame_get_size(frame), 1, dest_f)) {
             g_set_error(&error, VDO_CLIENT_ERROR, 0, "Failed to write frame: %m");
+            vdo_stream_buffer_unref(stream, &buffer, NULL);
             goto exit;
         }
 
@@ -219,6 +218,4 @@ exit:
     g_option_context_free(context);
 
     return ret;
-
 }
-
