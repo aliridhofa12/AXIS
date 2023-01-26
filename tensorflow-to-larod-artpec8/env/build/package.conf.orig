@@ -1,0 +1,13 @@
+PACKAGENAME="tensorflow_to_larod_a8_app"
+APPNAME="tensorflow_to_larod_a8"
+VENDOR="Axis Communications"
+REQEMBDEVVERSION="3.5"
+APPGRP="sdk"
+APPUSR="sdk"
+APPOPTS="/usr/local/packages/tensorflow_to_larod_a8/model/converted_model.tflite 480 270 1 -c 12"
+VENDORHOMEPAGELINK='<a href="https://www.axis.com" target="_blank">www.axis.com</a>'
+STARTMODE="never"
+APPMAJORVERSION="1"
+APPMINORVERSION="0"
+APPMICROVERSION="0"
+OTHERFILES="model/converted_model.tflite"
